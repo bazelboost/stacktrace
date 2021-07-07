@@ -1,0 +1,127 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+constraint_setting(
+    name = "stacktrace_implementation",
+    visibility = ["//visibility:public"],
+)
+
+constraint_value(
+    name = "use_windbg",
+    visibility = ["//visibility:public"],
+    constraint_setting = "stacktrace_implementation",
+)
+
+constraint_value(
+    name = "use_windbg_cached",
+    visibility = ["//visibility:public"],
+    constraint_setting = "stacktrace_implementation",
+)
+
+constraint_value(
+    name = "use_backtrace",
+    visibility = ["//visibility:public"],
+    constraint_setting = "stacktrace_implementation",
+)
+
+constraint_value(
+    name = "use_addr2line",
+    visibility = ["//visibility:public"],
+    constraint_setting = "stacktrace_implementation",
+)
+
+constraint_value(
+    name = "use_noop",
+    visibility = ["//visibility:public"],
+    constraint_setting = "stacktrace_implementation",
+)
+
+impl_hdrs = [
+    "include/boost/stacktrace/detail/addr2line_impls.hpp",
+    "include/boost/stacktrace/detail/collect_*.ipp",
+    "include/boost/stacktrace/detail/frame_*.ipp",
+    "include/boost/stacktrace/detail/safe_dump_*.ipp",
+]
+
+cc_library(
+    name = "stacktrace",
+    visibility = ["//visibility:public"],
+    includes = ["include"],
+    hdrs = glob(["include/boost/**/*.hpp", "include/boost/**/*.ipp"], exclude = impl_hdrs) + select({
+        ":use_windbg": [
+            "include/boost/stacktrace/detail/collect_msvc.ipp",
+            "include/boost/stacktrace/detail/frame_msvc.ipp",
+            "include/boost/stacktrace/detail/safe_dump_win.ipp",
+        ],
+        ":use_windbg_cached": [
+            "include/boost/stacktrace/detail/collect_msvc.ipp",
+            "include/boost/stacktrace/detail/frame_msvc.ipp",
+            "include/boost/stacktrace/detail/safe_dump_win.ipp",
+        ],
+        ":use_backtrace": [
+            "include/boost/stacktrace/detail/frame_unwind.ipp",
+            "include/boost/stacktrace/detail/safe_dump_posix.ipp",
+        ],
+        ":use_addr2line": [
+            "include/boost/stacktrace/detail/addr2line_impls.hpp",
+            "include/boost/stacktrace/detail/frame_unwind.ipp",
+            "include/boost/stacktrace/detail/safe_dump_posix.ipp",
+        ],
+        ":use_noop": [
+            "include/boost/stacktrace/detail/collect_noop.ipp",
+            "include/boost/stacktrace/detail/frame_noop.ipp",
+            "include/boost/stacktrace/detail/safe_dump_noop.ipp",
+        ],
+    }),
+    srcs = select({
+        ":use_windbg": ["src/windbg.cpp"],
+        ":use_windbg_cached": ["src/windbg_cached.cpp"],
+        ":use_backtrace": ["src/backtrace.cpp"],
+        ":use_addr2line": ["src/addr2line.cpp"],
+        ":use_noop": ["src/noop.cpp"],
+    }),
+    defines = select({
+        ":use_windbg": [],
+        ":use_windbg_cached": [],
+        ":use_backtrace": [],
+        ":use_addr2line": [],
+        ":use_noop": [],
+    }),
+    deps = [
+        "@boost//libs/core",
+        "@boost//libs/config",
+        "@boost//libs/predef",
+        "@boost//libs/type_traits",
+        "@boost//libs/functional",
+        "@boost//libs/thread",
+        "@boost//libs/timer",
+        "@boost//libs/array",
+    ] + select({
+        ":use_windbg": ["@boost//libs/winapi"],
+        ":use_windbg_cached": ["@boost//libs/winapi"],
+        "//conditions:default": [],
+    }),
+)
+
+# These platforms are only for the CI. You must define your own platforms for
+# your project
+platform(
+    name = "ci_windows",
+    constraint_values = [
+        ":use_windbg",
+        "@com_github_bazelboost_thread//:threadapi_win32",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        "@bazel_tools//tools/cpp:msvc",
+    ],
+)
+
+platform(
+    name = "ci_linux",
+    constraint_values = [
+        ":use_addr2line",
+        "@com_github_bazelboost_thread//:threadapi_pthread",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@bazel_tools//tools/cpp:gcc",
+    ],
+)
