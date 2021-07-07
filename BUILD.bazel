@@ -46,7 +46,7 @@ cc_library(
     name = "stacktrace",
     visibility = ["//visibility:public"],
     includes = ["include"],
-    hdrs = glob(["include/boost/**/*.hpp", "include/boost/**/*.ipp"], exclude = impl_hdrs) + select({
+    hdrs = glob(["include/boost/**/*.hpp", "include/boost/**/*.h", "include/boost/**/*.ipp"], exclude = impl_hdrs) + select({
         ":use_windbg": [
             "include/boost/stacktrace/detail/collect_msvc.ipp",
             "include/boost/stacktrace/detail/frame_msvc.ipp",
