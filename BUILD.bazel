@@ -58,10 +58,12 @@ cc_library(
             "include/boost/stacktrace/detail/safe_dump_win.ipp",
         ],
         ":use_backtrace": [
+            "include/boost/stacktrace/detail/collect_unwind.ipp",
             "include/boost/stacktrace/detail/frame_unwind.ipp",
             "include/boost/stacktrace/detail/safe_dump_posix.ipp",
         ],
         ":use_addr2line": [
+            "include/boost/stacktrace/detail/collect_unwind.ipp",
             "include/boost/stacktrace/detail/addr2line_impls.hpp",
             "include/boost/stacktrace/detail/frame_unwind.ipp",
             "include/boost/stacktrace/detail/safe_dump_posix.ipp",
@@ -78,6 +80,13 @@ cc_library(
         ":use_backtrace": ["src/backtrace.cpp"],
         ":use_addr2line": ["src/addr2line.cpp"],
         ":use_noop": ["src/noop.cpp"],
+    }),
+    linkopts = select({
+        ":use_windbg": [],
+        ":use_windbg_cached": [],
+        ":use_backtrace": ["-ldl"],
+        ":use_addr2line": ["-ldl"],
+        ":use_noop": [],
     }),
     defines = select({
         ":use_windbg": [],
