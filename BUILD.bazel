@@ -1,0 +1,22 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "boost.stacktrace",
+    hdrs = glob([
+        "include/**/*.hpp",
+        "include/**/*.h",
+    ]),
+    includes = ["include"],
+    deps = [
+        "@boost.array",
+        "@boost.config",
+        "@boost.container_hash",
+        "@boost.core",
+        "@boost.predef",
+        "@boost.static_assert",
+        "@boost.type_traits",
+        "@boost.winapi",
+    ],
+)
